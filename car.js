@@ -17,6 +17,10 @@ export default class Car {
   }
 
   update() {
+    this.#move()
+  }
+
+  #move() {
     // acceleration
     if (this.controls.forward) this.speed += this.acceleration
     if (this.controls.reverse) this.speed -= this.acceleration
@@ -31,8 +35,11 @@ export default class Car {
     if (Math.abs(this.speed) < this.friction) this.speed = 0
 
     // turn left/right
-    if (this.controls.left) this.angle += 0.03
-    if (this.controls.right) this.angle -= 0.03
+    if (this.speed != 0) {
+      const flip = this.speed > 0 ? 1 : -1 //flip changes turn side when reversing
+      if (this.controls.left) this.angle += 0.03 * flip
+      if (this.controls.right) this.angle -= 0.03 * flip
+    }
 
     // update position
     this.x -= Math.sin(this.angle) * this.speed
