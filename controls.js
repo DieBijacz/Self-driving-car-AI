@@ -1,13 +1,18 @@
 export default class Controls {
-  constructor() {
+  constructor(type) {
     this.forward = false
     this.left = false
     this.right = false
     this.reverse = false
 
-    this.#addKeyboardListeners()
-
+    switch (type) {
+      case 'KEYS':
+        return this.#addKeyboardListeners()
+      case 'DUMMY':
+        return this.forward = true
+    }
   }
+
   #addKeyboardListeners() {
     // KEY DOWN
     document.onkeydown = (e) => {

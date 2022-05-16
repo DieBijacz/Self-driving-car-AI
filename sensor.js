@@ -1,23 +1,50 @@
-import { lerp } from "./ulits.js"
+import { lerp, getIntersection } from "./utilitis.js"
 
 export default class Sensor {
   constructor(car) {
     this.car = car
-    this.rayCount = 3
-    this.rayLength = 100
-    this.raySpread = Math.PI / 4 // 45°
+    this.rayCount = 7
+    this.rayLength = 150
+    this.raySpread = Math.PI / 2 // 45°
 
     this.rays = []
-
+    this.readings = []
   }
 
-  update() {
+  update(roadBorders) {
+    this.#castRays()
+    this.readings = []
+    for (let i = 0; i < this.rays.length; i++) {
+      this.readings.push(this.#getReading(this.rays[i], roadBorders))
+    }
+  }
+
+  #getReading(ray, rayBorders) {
+    let touches = []
+
+    for (let i = 0; i < rayBorders.length; i++) {
+      const touch = getIntersection(ray[0], ray[1], rayBorders[i][0], rayBorders[i][1])
+      if (touch) {
+        touches.push(touch)
+      }
+    }
+
+    if (touches.length === 0) {
+      return null
+    } else {
+      const offsets = touches.map(e => e.offset)
+      const minOffset = Math.min(...offsets)
+      return touches.find(e => e.offset === minOffset)
+    }
+  }
+
+  #castRays() {
     this.rays = []
 
     // CREATE RAY
     // count angle
     for (let i = 0; i < this.rayCount; i++) {
-      const rayAngle = lerp(this.raySpread / 2, -this.raySpread / 2, i / (this.rayCount - 1))
+      const rayAngle = lerp(this.raySpread / 2, -this.raySpread / 2, this.rayCount === 1 ? 0.5 : i / (this.rayCount - 1)) + this.car.angle // this.car.angle changes so rays move with a car
 
       // get  start and end point
       const start = { x: this.car.x, y: this.car.y }
@@ -32,12 +59,27 @@ export default class Sensor {
   }
 
   draw(ctx) {
+    // DRAW EACH RAY
     for (let i = 0; i < this.rayCount; i++) {
+      let end = this.rays[i][1] // endpoint of ray
+      if (this.readings[i]) {
+        end = this.readings[i] // set end of ray to touching point of ray and border
+      }
+
+      // RAY ON THE ROAD
       ctx.beginPath()
       ctx.lineWidth = 1
       ctx.strokeStyle = 'yellow'
       ctx.moveTo(this.rays[i][0].x, this.rays[i][0].y) // from start point of each ray
-      ctx.lineTo(this.rays[i][1].x, this.rays[i][1].y) // to end point
+      ctx.lineTo(end.x, end.y) // to end point
+      ctx.stroke()
+
+      // RAY OUT OF THE ROAD
+      ctx.beginPath()
+      ctx.lineWidth = 1
+      ctx.strokeStyle = 'black'
+      ctx.moveTo(this.rays[i][1].x, this.rays[i][1].y) // start from point where ray touches border
+      ctx.lineTo(end.x, end.y) // to end point
       ctx.stroke()
     }
   }

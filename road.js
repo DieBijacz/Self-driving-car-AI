@@ -1,4 +1,4 @@
-import { lerp } from "./ulits.js"
+import { lerp } from "./utilitis.js"
 
 export default class Road {
   constructor(x, width, laneCount = 3) {
