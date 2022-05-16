@@ -16,22 +16,31 @@ export default class Car {
     this.angle = 0
     this.damaged = false
 
-    this.sensor = new Sensor(this) // pass car itself
+    if (type === 'MAIN') {
+      this.sensor = new Sensor(this) // pass car itself
+    }
     this.controls = new Controls(type)
   }
 
-  update(roadBorders) {
+  update(roadBorders, traffic) {
     if (!this.damaged) {
       this.#move()
       this.polygon = this.#createPolygon()
-      this.damaged = this.#assessDamage(roadBorders)
+      this.damaged = this.#assessDamage(roadBorders, traffic)
     }
-    this.sensor.update(roadBorders)
+    this.sensor && this.sensor.update(roadBorders, traffic)
   }
 
-  #assessDamage(roadBorders) {
+  #assessDamage(roadBorders, traffic) {
+    // colission with road border
     for (let i = 0; i < roadBorders.length; i++) {
       if (polysIntersect(this.polygon, roadBorders[i])) {
+        return true
+      }
+    }
+    // colission with traffic
+    for (let i = 0; i < traffic.length; i++) {
+      if (polysIntersect(this.polygon, traffic[i].polygon)) {
         return true
       }
     }
@@ -93,11 +102,11 @@ export default class Car {
     this.y -= Math.cos(this.angle) * this.speed
   }
 
-  draw(ctx) {
+  draw(ctx, color) {
     if (this.damaged) {
       ctx.fillStyle = 'red'
     } else {
-      ctx.fillStyle = 'black'
+      ctx.fillStyle = color
     }
     ctx.beginPath()
     ctx.moveTo(this.polygon[0].x, this.polygon[0].y)
@@ -105,6 +114,7 @@ export default class Car {
       ctx.lineTo(this.polygon[i].x, this.polygon[i].y)
     }
     ctx.fill()
-    this.sensor.draw(ctx)
+
+    this.sensor && this.sensor.draw(ctx)
   }
 }

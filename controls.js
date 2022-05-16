@@ -6,7 +6,7 @@ export default class Controls {
     this.reverse = false
 
     switch (type) {
-      case 'KEYS':
+      case 'MAIN':
         return this.#addKeyboardListeners()
       case 'DUMMY':
         return this.forward = true
