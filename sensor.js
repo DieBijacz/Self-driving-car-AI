@@ -3,7 +3,7 @@ import { lerp, getIntersection } from "./utilitis.js"
 export default class Sensor {
   constructor(car) {
     this.car = car
-    this.rayCount = 7
+    this.rayCount = 5
     this.rayLength = 150
     this.raySpread = Math.PI / 2 // 45°
 

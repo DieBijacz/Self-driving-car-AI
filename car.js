@@ -1,9 +1,10 @@
 import Controls from "./controls.js"
+import { NeuralNetwork } from "./network.js"
 import Sensor from "./sensor.js"
 import { polysIntersect } from "./utilitis.js"
 
 export default class Car {
-  constructor(x, y, width, height, type, maxSpeed = 5) {
+  constructor(x, y, width, height, type, maxSpeed = 2) {
     this.x = x
     this.y = y
     this.width = width
@@ -16,8 +17,11 @@ export default class Car {
     this.angle = 0
     this.damaged = false
 
-    if (type === 'MAIN') {
+    this.useBrain = type == 'AI'
+
+    if (type != 'DUMMY') {
       this.sensor = new Sensor(this) // pass car itself
+      this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4])
     }
     this.controls = new Controls(type)
   }
@@ -28,7 +32,20 @@ export default class Car {
       this.polygon = this.#createPolygon()
       this.damaged = this.#assessDamage(roadBorders, traffic)
     }
-    this.sensor && this.sensor.update(roadBorders, traffic)
+    if (this.sensor) {
+      this.sensor.update(roadBorders, traffic)
+      const offsets = this.sensor.readings.map(s => {
+        s === null ? 0 : 1 - s.offset
+      })
+      const outputs = NeuralNetwork.feedForward(offsets, this.brain)
+
+      if (this.useBrain) {
+        this.controls.forward = outputs[0]
+        this.controls.left = outputs[1]
+        this.controls.right = outputs[2]
+        this.controls.reverse = outputs[3]
+      }
+    }
   }
 
   #assessDamage(roadBorders, traffic) {
